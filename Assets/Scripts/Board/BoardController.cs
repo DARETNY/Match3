@@ -3,6 +3,7 @@ using System.Linq;
 using CameraHandle;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 namespace Game
@@ -13,10 +14,12 @@ namespace Game
 
         [SerializeField] private int width, height;
         [SerializeField] private SpriteRenderer cellViewprefab;
-        [SerializeField] private float cellsize;
+        [SerializeField] private float cellSize;
         [SerializeField] private Transform boardHandle;
 
 
+        private SpriteRenderer[,] _views;
+        
         private void Start()
         {
             Setup();
@@ -32,30 +35,30 @@ namespace Game
 
         private void Swipe(Vector2 fp, Vector2 lp)
         {
-            var widthCellCount = width / cellsize;
-            var heightCellCount = height / cellsize;
+            var startIndex = fp.ToGridIndex(cellSize);
+            var endIndex = lp.ToGridIndex(cellSize);
 
-            fp += new Vector2(.5f, .5f);
+            if (!startIndex.HasCell(_board) || !endIndex.HasCell(_board) || Equals(startIndex, endIndex)) return;
+
+            _board.Swap(startIndex, endIndex);
+            _views.Swap(startIndex, endIndex);
             
-            var xStart = Mathf.Abs(Mathf.FloorToInt(fp.x / cellsize));
-            var yStart = Mathf.Abs(Mathf.FloorToInt(fp.y / cellsize));
-            
-            var firstSelectedCell = _board.Grid[(int)xStart, (int)yStart];
-            
-            var xEnd = Mathf.Abs(Mathf.FloorToInt(lp.x / cellsize));
-            var yEnd = Mathf.Abs(Mathf.FloorToInt(lp.y / cellsize));
-            
-            var lastSelectedCell = _board.Grid[(int)xEnd, (int)yEnd];
-            
-            Debug.Log($"{xStart} {yStart}");
-            Debug.Log($"{xEnd} {yEnd}");
+            // View
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    var pos = _board.Grid[x, y].Pos();
+                    _views[x, y].transform.DOMove(pos, .5f);
+                }
+            }
         }
 
 
-        void Setup()
+        private void Setup()
         {
-            CellType[,] gridTypes = new CellType[width, height];
-
+            var gridTypes = new CellType[width, height];
+            _views = new SpriteRenderer[width, height];
 
             for (int x = 0; x < width; x++)
             {
@@ -65,13 +68,15 @@ namespace Game
                  
                     // View
                     var view = Instantiate(cellViewprefab, boardHandle, true);
-                    view.transform.position = new Vector3(x, -y) * cellsize;
+                    view.transform.position = new Vector3(x, -y) * cellSize;
                     view.color = gridTypes[x, y].GetColor();
                     DoFade(view, x, y);
+
+                    _views[x, y] = view;
                 }
             }
 
-            _board = new Board(width, height, gridTypes, cellsize);
+            _board = new Board(width, height, gridTypes, cellSize);
         }
 
         private  void DoFade(SpriteRenderer view, int x, int y)
@@ -93,16 +98,16 @@ namespace Game
             Bounds bounds = new Bounds();
 
             var centerGrid = _board.Grid[(width - 1) / 2, (height - 1) / 2];
-            var centerOffset = ((_board.Grid.Length % 2) - 1) * cellsize / 2f;
+            var centerOffset = ((_board.Grid.Length % 2) - 1) * cellSize / 2f;
 
             bounds.center = new Vector3(centerGrid.X, centerGrid.Y);
             var topLeftCellPos = _board.Grid[0, 0].Pos();
             var bottomRightCellPos = _board.Grid[width - 1, height - 1].Pos();
 
 
-            bounds.size = new Vector3(Mathf.Abs((bottomRightCellPos.x - topLeftCellPos.x) + cellsize + centerOffset),
-                Mathf.Abs((topLeftCellPos.y - bottomRightCellPos.y) + cellsize + centerOffset), 1);
-            Camera.main.SetOrtho(bounds);
+            bounds.size = new Vector3(Mathf.Abs((bottomRightCellPos.x - topLeftCellPos.x) + cellSize + centerOffset),
+                Mathf.Abs((topLeftCellPos.y - bottomRightCellPos.y) + cellSize + centerOffset), 1);
+            CameraUtils.MainCamera.SetOrthographicSize(bounds);
         }
     }
 }

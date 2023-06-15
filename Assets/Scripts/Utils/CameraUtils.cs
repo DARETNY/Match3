@@ -4,7 +4,13 @@ namespace CameraHandle
 {
     public static class CameraUtils
     {
-        public static void SetOrtho(this Camera camera, Bounds targetBounds)
+        static CameraUtils()
+        {
+            MainCamera = Camera.main;
+        }
+        public static Camera MainCamera { get; private set; }
+        
+        public static void SetOrthographicSize(this Camera camera, Bounds targetBounds)
         {
             float screenRatio = Screen.width / (float)Screen.height;
             float targetRatio = targetBounds.size.x / targetBounds.size.y;

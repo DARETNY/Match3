@@ -1,4 +1,5 @@
 using System;
+using CameraHandle;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -21,12 +22,11 @@ namespace Game
         {
             lp = eventData.position;
 
-            fp = Camera.main.ScreenToWorldPoint(fp);
-            lp = Camera.main.ScreenToWorldPoint(lp);
+            var mainCamera = CameraUtils.MainCamera;
+            fp = mainCamera.ScreenToWorldPoint(fp);
+            lp = mainCamera.ScreenToWorldPoint(lp);
             
             OnSwipe?.Invoke(fp, lp);
-            
-            Debug.Log(fp + " " + lp);
         }
     }
 }
