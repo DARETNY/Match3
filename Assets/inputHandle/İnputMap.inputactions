@@ -1,0 +1,89 @@
+{
+    "name": "İnputMap",
+    "maps": [
+        {
+            "name": "Swipe",
+            "id": "0ae87d60-e9f8-4d3f-9a92-9c8e0898d270",
+            "actions": [
+                {
+                    "name": "mapper",
+                    "type": "Value",
+                    "id": "f66e8b32-f6db-4d21-8bea-ae29a83ba23b",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "6f2f5da1-a2fc-44fc-a6bd-2ce2fd2bfa27",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "mapper",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "2D Vector",
+                    "id": "46d12715-9b21-4226-9697-6eef7e7e6a0a",
+                    "path": "2DVector",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "mapper",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "up",
+                    "id": "3dee117d-e736-444a-804f-1854966d9e34",
+                    "path": "w",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "mapper",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "down",
+                    "id": "4432f808-23ed-497f-b854-575c81bb2fc3",
+                    "path": "s",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "mapper",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "left",
+                    "id": "d3a1e495-ebd0-450e-9071-426201b0d254",
+                    "path": "a",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "mapper",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "right",
+                    "id": "43eddd01-102d-48bf-95c6-1ad75e795310",
+                    "path": "d",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "mapper",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
