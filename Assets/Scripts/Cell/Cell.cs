@@ -4,7 +4,7 @@ namespace Game
 {
     public class Cell
     {
-        public readonly CellType CellType;
+        public CellType CellType;
         public float X, Y;
 
         public Cell(float x, float y, CellType cellType)

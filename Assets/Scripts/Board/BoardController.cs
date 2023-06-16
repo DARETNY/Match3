@@ -1,9 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using CameraHandle;
 using DG.Tweening;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 namespace Game
@@ -40,18 +40,76 @@ namespace Game
 
             if (!startIndex.HasCell(_board) || !endIndex.HasCell(_board) || Equals(startIndex, endIndex)) return;
 
+            // Swap
             _board.Swap(startIndex, endIndex);
             _views.Swap(startIndex, endIndex);
             
             // View
+            var sequence = DOTween.Sequence().Pause();
+            sequence = UpdateView();
+
+            // Find match
+            if (!TryFindMatches())
+            {
+                // Reverse swap
+                _board.Swap(startIndex, endIndex);
+                _views.Swap(startIndex, endIndex);
+                
+                // View
+                sequence.Append(UpdateView());
+            }
+
+            sequence.Play();
+        }
+
+        private bool TryFindMatches()
+        {
+            List<Tuple<int, int>> matches = _board.FindMatches();
+            
+            if (matches.Count == 0)
+            {
+                return false;
+            }
+
+            // Explode matches
+            foreach (var match in matches)
+            {
+                var x = match.Item1;
+                var y = match.Item2;
+                    
+                var cellType = GetRandomCellType();
+                var defaultScale = _views[x, y].transform.localScale;
+                _board.Grid[x, y].CellType = cellType;
+                    
+                _views[x, y].transform
+                    .DOScale(_views[x, y].transform.localScale * 1.25f, .5f)
+                    .SetEase(Ease.OutCubic)
+                    .OnComplete(() =>
+                    {
+                        _views[x, y].color = cellType.GetColor();
+                        _views[x, y].transform
+                            .DOScale(defaultScale, .25f)
+                            .SetEase(Ease.OutCubic);
+                    });
+            }
+            
+            Invoke(nameof(TryFindMatches), 2f);
+            
+            return true;
+        }
+
+        private Sequence UpdateView()
+        {
+            Sequence sequence = DOTween.Sequence();
             for (int x = 0; x < width; x++)
             {
                 for (int y = 0; y < height; y++)
                 {
                     var pos = _board.Grid[x, y].Pos();
-                    _views[x, y].transform.DOMove(pos, .5f);
+                    sequence.Join(_views[x, y].transform.DOMove(pos, .5f));
                 }
             }
+            return sequence;
         }
 
 
@@ -64,7 +122,7 @@ namespace Game
             {
                 for (int y = 0; y < height; y++)
                 {
-                    gridTypes[x, y] = (CellType)Random.Range(1, (int) Enum.GetValues(typeof(CellType)).Cast<CellType>().Max());
+                    gridTypes[x, y] = GetRandomCellType();
                  
                     // View
                     var view = Instantiate(cellViewprefab, boardHandle, true);
@@ -77,6 +135,11 @@ namespace Game
             }
 
             _board = new Board(width, height, gridTypes, cellSize);
+        }
+
+        private CellType GetRandomCellType()
+        {
+            return (CellType)Random.Range(1, (int) Enum.GetValues(typeof(CellType)).Cast<CellType>().Max());
         }
 
         private  void DoFade(SpriteRenderer view, int x, int y)

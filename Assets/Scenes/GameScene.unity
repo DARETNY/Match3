@@ -152,10 +152,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 819c05e1c4c940cdbf49c137e7851bc4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 5
-  height: 5
+  width: 10
+  height: 10
   cellViewprefab: {fileID: 5407416851514288084, guid: 90ae369a8f1a4426da7920473d5ef41d, type: 3}
-  cellsize: 2
+  cellSize: 2
   boardHandle: {fileID: 226319694}
 --- !u!4 &226319694
 Transform:
@@ -342,7 +342,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_BackGroundColor: {r: 0.17795478, g: 0.4056604, b: 0.348734, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
