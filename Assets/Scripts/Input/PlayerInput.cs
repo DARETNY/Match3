@@ -1,10 +1,10 @@
 using System;
-using Board;
-using CameraHandle;
+using Game.Board;
+using Game.Utils;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace Input
+namespace Game.Input
 {
     public class PlayerInput : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
@@ -31,6 +31,7 @@ namespace Input
             if (Math.Round(checkDistance) <= BoardController.Instance.CellSize)
             {
                 OnSwipe?.Invoke(fp, lp);
+                Debug.Log($"{fp} {lp}");
             }
         }
     }

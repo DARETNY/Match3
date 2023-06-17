@@ -1,7 +1,7 @@
-using Game;
+using System;
 using UnityEngine;
 
-namespace Cell
+namespace Game.Cells
 {
     public static class CellUtils
     {
@@ -10,6 +10,9 @@ namespace Cell
             var color = Color.black;
             switch (cellType)
             {
+                case CellType.None:
+                    color = Color.black;
+                    break;
                 case CellType.Yellow:
                     color = Color.yellow;
                     break;
@@ -25,6 +28,14 @@ namespace Cell
                 case CellType.Green:
                     color = Color.green;
                     break;
+                case CellType.SquareMatchBomb:
+                    color = Color.cyan;
+                    break;
+                case CellType.FiveMatchBomb:
+                    color = Color.magenta;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(cellType), cellType, null);
             }
 
             return color;

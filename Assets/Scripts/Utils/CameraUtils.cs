@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace CameraHandle
+namespace Game.Utils
 {
     public static class CameraUtils
     {

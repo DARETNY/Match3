@@ -1,22 +1,19 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using CameraHandle;
-using Cell;
+using Game.Cells;
+using Game.Utils;
+using Game.Input;
 using DG.Tweening;
-using Game;
-using Input;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
-namespace Board
+namespace Game.Board
 {
     public class BoardController : MonoBehaviour
     {
         private Board _board;
 
         [SerializeField] private int width, height;
-        [SerializeField] private SpriteRenderer cellViewprefab;
+        [SerializeField] private CellView cellViewPrefab;
         [SerializeField] private float cellSize;
         public float CellSize => cellSize;
 
@@ -26,6 +23,10 @@ namespace Board
         private SpriteRenderer[,] _views;
         public static BoardController Instance { get; private set; }
 
+        private Sequence _waveSequences;
+        
+        private bool _isSwiping;
+        
         private void Awake()
         {
             Instance = this;
@@ -34,10 +35,12 @@ namespace Board
         private void Start()
         {
             Setup();
-            UpdateCamera();
             
+            UpdateCamera();
 
-            TryFindMatches().Equals(true);
+            //TryFindMatches();
+
+            UpdateView();
         }
 
         private void OnEnable()
@@ -49,9 +52,15 @@ namespace Board
         {
             PlayerInput.OnSwipe -= Swipe;
         }
-
+        
         private void Swipe(Vector2 fp, Vector2 lp)
         {
+            if (_isSwiping) return;
+
+            Debug.Log("Swiping start");
+            
+            _isSwiping = true;
+            
             var startIndex = fp.ToGridIndex(cellSize);
             var endIndex = lp.ToGridIndex(cellSize);
 
@@ -62,8 +71,8 @@ namespace Board
             _views.Swap(startIndex, endIndex);
 
             // View
-            var sequence = DOTween.Sequence().Pause();
-            sequence = UpdateView();
+            var sequence = DOTween.Sequence();
+            sequence = UpdateView().Pause();
 
             // Find match
             if (!TryFindMatches())
@@ -81,38 +90,131 @@ namespace Board
 
         private bool TryFindMatches()
         {
+            if (!_waveSequences.IsActive())
+            {
+                _waveSequences = DOTween.Sequence();
+                _waveSequences.Pause();
+            }
+            
             List<Tuple<int, int>> matches = _board.FindMatches();
 
             if (matches.Count == 0)
             {
+                _waveSequences.OnComplete(() =>
+                {
+                    Debug.Log("Swiping end");
+                    _isSwiping = false;
+                });
+                _waveSequences.Play();
+                
                 return false;
             }
 
             // Explode matches
+            List<Tuple<int, int>> movingViewPoints = new();
+
+            var waveSequence = DOTween.Sequence().Pause();
             foreach (var match in matches)
             {
+                if (movingViewPoints.Contains(match)) continue;
+                
+                movingViewPoints.Add(match);
+                
                 var x = match.Item1;
                 var y = match.Item2;
+                
+                var cellType = GetRandomBasicCellType();
+                var cellView =  _views[x, y];
 
-                var cellType = GetRandomCellType();
-                var defaultScale = _views[x, y].transform.localScale;
+                var defaultScale = cellView.transform.localScale;
                 _board.Grid[x, y].CellType = cellType;
-
-                _views[x, y].transform
-                    .DOScale(_views[x, y].transform.localScale * 1.25f, .5f)
+                
+                var cellTween = cellView.transform
+                    .DOScale(cellView.transform.localScale * 1.25f, .5f)
                     .SetEase(Ease.OutCubic)
                     .OnComplete(() =>
                     {
-                        _views[x, y].color = cellType.GetColor();
-                        _views[x, y].transform
-                            .DOScale(defaultScale, .25f)
-                            .SetEase(Ease.OutCubic);
+                        // TODO: Add explosion
+                        
+                        // TODO Poola ekle
+
+                        // if (cellView != null)
+                        // {
+                        //     cellView.transform.position = Vector3.one * 100000f;
+                        //     cellView.color = cellType.GetColor();
+                        //     cellView.transform.localScale = defaultScale; // .DOScale(defaultScale, .25f) .SetEase(Ease.OutCubic);
+                        // }
+                        
+                        if (cellView != null)
+                        {
+                            cellView.color = cellType.GetColor();
+                            cellView.transform.DOScale(defaultScale, .25f) .SetEase(Ease.OutCubic);
+                        }
+                        
                     });
+                
+                waveSequence.Join(cellTween);
             }
 
-            Invoke(nameof(TryFindMatches), 2f);
+            // waveSequence.AppendCallback(() =>
+            // {
+            //     FallViews(movingViewPoints);
+            // });
+            waveSequence.AppendInterval(1f);
+            _waveSequences.Append(waveSequence);
+
+            TryFindMatches();
 
             return true;
+        }
+
+        private void FallViews(List<Tuple<int, int>> destroyingCoords)
+        {
+            foreach (var (x, y) in destroyingCoords)
+            {
+                // TODO: send to pool
+                if (_views[x, y] != null)
+                    _views[x, y].gameObject.SetActive(false);
+                _views[x, y] = null;
+            }
+
+            for (int y = _board.Height - 1; y >= 0; y--)
+            {
+                for (int x = 0; x < _board.Width; x++)
+                {
+                    if (_views[x, y] == null)
+                    {
+                        SetUpperView(x, y);
+                    }
+                }
+            }
+        }
+
+        private void SetUpperView(int x, int y)
+        {
+            var belowX = x;
+            var belowY = y;
+            SpriteRenderer upperView = null;
+            do
+            {
+                y--;
+
+                if (_views[belowX, y] != null)
+                {
+                    upperView = _views[belowX, y];
+                    _views[belowX, y] = null;
+                }
+                
+            } while (y > 0);
+
+            if (upperView == null)
+            {
+                upperView = Instantiate(cellViewPrefab).SpriteRenderer;
+            }
+            
+            upperView.transform.position = new Vector3(belowX, -belowY) * cellSize;
+            _views[belowX, belowY] = upperView;
+            Debug.Log(upperView.transform.position);
         }
 
         private Sequence UpdateView()
@@ -123,6 +225,7 @@ namespace Board
                 for (int y = 0; y < height; y++)
                 {
                     var pos = _board.Grid[x, y].Pos();
+                    _views[x, y].GetComponent<CellView>().Coordinate.SetText($"{x}, {y}");
                     sequence.Join(_views[x, y].transform.DOMove(pos, .5f));
                 }
             }
@@ -140,24 +243,24 @@ namespace Board
             {
                 for (int y = 0; y < height; y++)
                 {
-                    gridTypes[x, y] = GetRandomCellType();
+                    gridTypes[x, y] = GetRandomBasicCellType();
 
                     // View
-                    var view = Instantiate(cellViewprefab, boardHandle, true);
+                    var view = Instantiate(cellViewPrefab, boardHandle, true);
                     view.transform.position = new Vector3(x, -y) * cellSize;
-                    view.color = gridTypes[x, y].GetColor();
+                    view.SpriteRenderer.color = gridTypes[x, y].GetColor();
                     // DoFade(view, x, y);
 
-                    _views[x, y] = view;
+                    _views[x, y] = view.SpriteRenderer;
                 }
             }
 
             _board = new Board(width, height, gridTypes, cellSize);
         }
 
-        private CellType GetRandomCellType()
+        private CellType GetRandomBasicCellType()
         {
-            return (CellType)Random.Range(1, (int)Enum.GetValues(typeof(CellType)).Cast<CellType>().Max());
+            return (CellType) UnityEngine.Random.Range(CellSettings.MIN_BASIC_CELL_ID, CellSettings.MAX_BASIC_CELL_ID + 1);
         }
 
         private void DoFade(SpriteRenderer view, int x, int y)

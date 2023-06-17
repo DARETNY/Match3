@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Cell
+namespace Game.Cells
 {
     public class Cell
     {
