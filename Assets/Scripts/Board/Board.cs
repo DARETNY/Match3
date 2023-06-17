@@ -1,8 +1,11 @@
-namespace Game
+using Cell;
+using Game;
+
+namespace Board
 {
     public class Board
     {
-        public readonly Cell[,] Grid;
+        public readonly Cell.Cell[,] Grid;
         public readonly int Width;
         public readonly int Height;
 
@@ -11,13 +14,13 @@ namespace Game
         {
             Width = width;
             Height = height;
-            Grid = new Cell[width,height];
+            Grid = new Cell.Cell[width,height];
 
             for (int x = 0; x < width; x++)
             {
                 for (int y = 0; y < height; y++)
                 {
-                    Grid[x,y] = new Cell(x * cellSize, -y * cellSize, gridTypes[x, y]);
+                    Grid[x,y] = new Cell.Cell(x * cellSize, -y * cellSize, gridTypes[x, y]);
                
                 }
             }

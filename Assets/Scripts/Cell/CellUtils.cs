@@ -1,6 +1,7 @@
+using Game;
 using UnityEngine;
 
-namespace Game
+namespace Cell
 {
     public static class CellUtils
     {

@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using CameraHandle;
+using Cell;
 using DG.Tweening;
+using Game;
+using Input;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace Game
+namespace Board
 {
     public class BoardController : MonoBehaviour
     {
@@ -15,20 +18,34 @@ namespace Game
         [SerializeField] private int width, height;
         [SerializeField] private SpriteRenderer cellViewprefab;
         [SerializeField] private float cellSize;
+        public float CellSize => cellSize;
+
         [SerializeField] private Transform boardHandle;
 
 
         private SpriteRenderer[,] _views;
-        
+        public static BoardController Instance { get; private set; }
+
+        private void Awake()
+        {
+            Instance = this;
+        }
+
         private void Start()
         {
             Setup();
             UpdateCamera();
+            
 
+            TryFindMatches().Equals(true);
+        }
+
+        private void OnEnable()
+        {
             PlayerInput.OnSwipe += Swipe;
         }
 
-        private void OnDestroy()
+        private void OnDisable()
         {
             PlayerInput.OnSwipe -= Swipe;
         }
@@ -43,7 +60,7 @@ namespace Game
             // Swap
             _board.Swap(startIndex, endIndex);
             _views.Swap(startIndex, endIndex);
-            
+
             // View
             var sequence = DOTween.Sequence().Pause();
             sequence = UpdateView();
@@ -54,7 +71,7 @@ namespace Game
                 // Reverse swap
                 _board.Swap(startIndex, endIndex);
                 _views.Swap(startIndex, endIndex);
-                
+
                 // View
                 sequence.Append(UpdateView());
             }
@@ -65,7 +82,7 @@ namespace Game
         private bool TryFindMatches()
         {
             List<Tuple<int, int>> matches = _board.FindMatches();
-            
+
             if (matches.Count == 0)
             {
                 return false;
@@ -76,11 +93,11 @@ namespace Game
             {
                 var x = match.Item1;
                 var y = match.Item2;
-                    
+
                 var cellType = GetRandomCellType();
                 var defaultScale = _views[x, y].transform.localScale;
                 _board.Grid[x, y].CellType = cellType;
-                    
+
                 _views[x, y].transform
                     .DOScale(_views[x, y].transform.localScale * 1.25f, .5f)
                     .SetEase(Ease.OutCubic)
@@ -92,9 +109,9 @@ namespace Game
                             .SetEase(Ease.OutCubic);
                     });
             }
-            
+
             Invoke(nameof(TryFindMatches), 2f);
-            
+
             return true;
         }
 
@@ -109,6 +126,7 @@ namespace Game
                     sequence.Join(_views[x, y].transform.DOMove(pos, .5f));
                 }
             }
+
             return sequence;
         }
 
@@ -123,12 +141,12 @@ namespace Game
                 for (int y = 0; y < height; y++)
                 {
                     gridTypes[x, y] = GetRandomCellType();
-                 
+
                     // View
                     var view = Instantiate(cellViewprefab, boardHandle, true);
                     view.transform.position = new Vector3(x, -y) * cellSize;
                     view.color = gridTypes[x, y].GetColor();
-                    DoFade(view, x, y);
+                    // DoFade(view, x, y);
 
                     _views[x, y] = view;
                 }
@@ -139,10 +157,10 @@ namespace Game
 
         private CellType GetRandomCellType()
         {
-            return (CellType)Random.Range(1, (int) Enum.GetValues(typeof(CellType)).Cast<CellType>().Max());
+            return (CellType)Random.Range(1, (int)Enum.GetValues(typeof(CellType)).Cast<CellType>().Max());
         }
 
-        private  void DoFade(SpriteRenderer view, int x, int y)
+        private void DoFade(SpriteRenderer view, int x, int y)
         {
             var realViewColor = view.color;
             var realViewScale = view.transform.localScale;

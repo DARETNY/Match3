@@ -1,4 +1,4 @@
-namespace Game
+namespace Cell
 {
     public enum CellType
     {
